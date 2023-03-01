@@ -1,0 +1,345 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+<title>スライドパズル</title> 
+<script type="text/javascript"> 
+var ims = document.getElementsByName("im"); 
+var aki = -1; 
+var a1 = new Audio("puzzle_slide.mp3")              //スライドしたときの効果音を入れる配列 
+var a2 = new Audio("correct_puzzle.mp3");           //完成時の音楽 
+var a1_cnt = 0;                                     //次に効果音を鳴らす配列要素の値 
+var move_cnt;                                       //移動回数
+var ims_M = new Array(9);
+var aki_M = -1;
+var flag = 0, first = 0, img_i = 1;
+var soundFlag = 0;
+
+function check() { 
+  if( ims[0].src.slice(-11)=='test' + img_i + '-0.jpg' && ims[1].src.slice(-11)=='test' + img_i + '-1.jpg' && 
+      ims[2].src.slice(-11)=='test' + img_i + '-2.jpg' && ims[3].src.slice(-11)=='test' + img_i + '-3.jpg' &&
+      ims[4].src.slice(-11)=='test' + img_i + '-4.jpg' && ims[5].src.slice(-11)=='test' + img_i + '-5.jpg' && 
+      ims[6].src.slice(-11)=='test' + img_i + '-6.jpg' && ims[7].src.slice(-11)=='test' + img_i + '-7.jpg' ){ //画像ファイル名の長さが X のときは slice(-X) とすること 
+    ims[8].src = 'test' + img_i + '-8.jpg';
+    if(soundFlag) a2.play(); //完成時の音楽を再生 
+    if(first == 0){
+      document.getElementById("msg").innerHTML = '<font color="red">完成です</font>';
+      document.getElementById("msg").style.visibility = "visible";
+      first = 1;
+    }else {
+      document.getElementById("msg").style.visibility = "visible";
+    }
+    document.getElementById("button").style.visibility = "hidden";
+    document.getElementById("start").style.visibility = "visible";
+    document.getElementById("img1").style.visibility = "visible";
+    document.getElementById("img2").style.visibility = "visible";
+    document.getElementById("img3").style.visibility = "visible";
+    document.getElementById("img4").style.visibility = "visible";
+    stopTime(); 
+  } 
+} 
+ 
+function c(p) { 
+  if( p==0 ){ 
+    if( aki!=1 && aki!=3 ) return; 
+  }else if( p==1 ){ 
+    if( aki!=0 && aki!=2 && aki!=4 ) return; 
+  }else if( p==2 ){ 
+    if( aki!=1 && aki!=5 ) return; 
+  }else if( p==3 ){ 
+    if( aki!=0 && aki!=4 && aki!=6 ) return; 
+  }else if( p==4 ){ 
+    if( aki!=1 && aki!=3 && aki!=5 && aki!=7 ) return; 
+  }else if( p==5 ){ 
+    if( aki!=2 && aki!=4 && aki!=8 ) return; 
+  }else if( p==6 ){ 
+    if( aki!=3 && aki!=7 ) return; 
+  }else if( p==7 ){ 
+    if( aki!=4 && aki!=6 && aki!=8 ) return; 
+  }else if( p==8 ){ 
+    if( aki!=5 && aki!=7 ) return; 
+  }
+  if(soundFlag)a1.play();  //スライドしたときの効果音を再生  
+  ims[aki].src = ims[p].src; 
+  ims[aki=p].src = "black.gif"; 
+  move_cnt++;
+  document.getElementById("move_cnt").innerHTML = move_cnt; 
+  check(); 
+}
+
+function game_start(){
+  move_cnt = 0;
+  document.getElementById("move_cnt").innerHTML = move_cnt;
+  aki = 8;
+  startTime();
+ 
+  if(flag == 0){ 
+    const newpuzzleButton = document.createElement('input');
+    newpuzzleButton.type = 'button';
+    newpuzzleButton.value = '新しいパズル';
+    newpuzzleButton.onclick = function(){
+                                move_cnt = 0;
+                                document.getElementById("move_cnt").innerHTML = move_cnt;
+                                stopTime();
+                                startTime();
+                                make_puzzle();
+                              };
+    document.getElementById("button").appendChild(newpuzzleButton);
+
+    const restartButton = document.createElement('input');
+    restartButton.type = 'button';
+    restartButton.value = 'やり直し';
+    restartButton.onclick = function(){restart();};
+    document.getElementById("button").appendChild(restartButton);
+
+    const endButton = document.createElement('input');
+    endButton.type = 'button';
+    endButton.value = 'ゲームを終わる';
+    endButton.onclick = function(){
+                              document.getElementById("button").style.visibility = "hidden";
+                              document.getElementById("start").style.visibility = "visible";
+                              document.getElementById("img1").style.visibility = "visible";
+                              document.getElementById("img2").style.visibility = "visible";
+                              document.getElementById("img3").style.visibility = "visible";
+                              document.getElementById("img4").style.visibility = "visible";
+                              stopTime();
+                              for(i = 0; i <= 8; i++){
+                                ims[i].src = 'test' + img_i + '-' + i + '.jpg';
+                              }
+                            };
+    document.getElementById("button").appendChild(endButton);
+
+    const soundButton = document.createElement('input');
+    soundButton.type = 'button';
+    soundButton.value = '効果音をつける';
+    soundButton.onclick = function(){
+                              if(soundFlag){
+                                 soundFlag = 0;
+                                 soundButton.value ='効果音をつける';
+                              }else {
+                                soundFlag = 1;
+                                soundButton.value ='効果音を消す' ;
+                              }
+                            };
+    document.getElementById("button").appendChild(soundButton);
+
+    flag = 1;
+  }else {
+    document.getElementById("msg").style.visibility = "hidden";
+    document.getElementById("button").style.visibility = "visible";
+  }
+  
+  document.getElementById("start").style.visibility = "hidden";
+  document.getElementById("img1").style.visibility = "hidden";
+  document.getElementById("img2").style.visibility = "hidden";
+  document.getElementById("img3").style.visibility = "hidden";
+  document.getElementById("img4").style.visibility = "hidden";
+
+  make_puzzle();
+}
+
+function restart(){
+  for(i = 0; i <= 8; i++){
+    ims[i].src = ims_M[i];
+  }
+  aki = aki_M;
+  move_cnt = 0;
+  document.getElementById("move_cnt").innerHTML = move_cnt;
+  stopTime();
+  startTime();
+}
+
+// パズルをランダムに生成
+function make_puzzle(){
+  ims[aki].src = "black.gif";
+  for(i = 0; i < 30; i++){
+    rand = Math.random();
+    if(aki == 0){
+      if(rand < 0.5){
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1; 
+      }else {
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }
+    }
+    if(aki == 1){
+      if(rand < 0.3){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1; 
+      }else if(rand < 0.6){
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }else{
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1;
+      }
+    }
+    if(aki == 2){
+      if(rand < 0.5){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1; 
+      }else {
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }
+    }
+    if(aki == 3){
+      if(rand < 0.3){
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1; 
+      }else if(rand < 0.6){
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }else{
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3;
+      }
+    }
+    if(aki == 4) {
+      if(rand < 0.25){
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3; 
+      }else if(rand < 0.5){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1;
+      }else if(rand < 0.75){
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }else {
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1;
+      }
+    }
+    if(aki == 5){
+      if(rand < 0.3){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1; 
+      }else if(rand < 0.6){
+        ims[aki].src = ims[aki+3].src; 
+        ims[aki+3].src = "black.gif";
+        aki = aki + 3;
+      }else{
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3;
+      }
+    }
+    if(aki == 6){
+      if(rand < 0.5){
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1; 
+      }else {
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3;
+      }
+    }
+    if(aki == 7){
+      if(rand < 0.3){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1; 
+      }else if(rand < 0.6){
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3;
+      }else{
+        ims[aki].src = ims[aki+1].src; 
+        ims[aki+1].src = "black.gif";
+        aki = aki + 1;
+      }
+    }
+    if(aki == 8){
+      if(rand < 0.5){
+        ims[aki].src = ims[aki-1].src; 
+        ims[aki-1].src = "black.gif";
+        aki = aki - 1; 
+      }else {
+        ims[aki].src = ims[aki-3].src; 
+        ims[aki-3].src = "black.gif";
+        aki = aki - 3;
+      }
+    }
+  }
+  for(i = 0; i <= 8; i++){
+    ims_M[i] = ims[i].src;
+  }
+  aki_M = aki;
+}
+
+function select_img(p){
+  for(i = 0; i <= 8; i++){
+    ims[i].src = 'test' + p  + '-' + i + '.jpg';
+  }
+  img_i = p;
+}
+
+var PassSec;   // 秒数カウント用変数
+// 繰り返し処理の中身
+function showTime() {
+   PassSec++;   // カウントアップ
+   document.getElementById("time").innerHTML = PassSec/100;   // 表示更新
+}
+
+// 繰り返し処理の開始
+function startTime() {
+   PassSec = 0;   // カウンタのリセット
+   PassageID = setInterval('showTime()',10);   // タイマーをセット
+}
+
+// 繰り返し処理の中止
+function stopTime() {
+   clearInterval( PassageID );   // タイマーのクリア
+}
+</script> 
+</head> 
+<body>
+<h2 align="center">スライドパズル 3×3</h2>
+<ol style="width:450px;margin:auto;">
+<li>遊びたい画像を選択してください</li>
+<li>ゲーム開始ボタンを押すとピースがランダムに配置されます</li>
+<li>ピースをクリックするとスライドされます</li>
+</ol>
+<br>
+<div style="width:470px;margin:auto;">
+パズルを配置し直したい場合は新しいパズルボタン、パズルを配置直後の状態に戻したい場合はやり直しボタン、ゲームを終了または画像選択をやり直したい場合はゲームを終わるボタンを押してください。<br>
+</div>
+<div align="center">
+<input id="img1" type="button" onClick="select_img(1)" value="画像1">
+<input id="img2" type="button" onClick="select_img(2)" value="画像2">
+<input id="img3" type="button" onClick="select_img(3)" value="画像3">
+<input id="img4" type="button" onClick="select_img(4)" value="画像4"><br>
+<input id="start" type="button" onClick="game_start()" value="ゲーム開始"><br>
+<div id="button"></div>
+</div>
+<div style="width:450px;margin:auto;">
+移動回数：<span id="move_cnt"></span>
+経過時間:<span id="time"></span>
+</div>
+<div style="line-height:0" align="center"> 
+<img name="im" onClick="c(0)" src="test1-0.jpg"><img name="im" onClick="c(1)" src="test1-1.jpg"><img name="im" onClick="c(2)" src="test1-2.jpg"><br> 
+<img name="im" onClick="c(3)" src="test1-3.jpg"><img name="im" onClick="c(4)" src="test1-4.jpg"><img name="im" onClick="c(5)" src="test1-5.jpg"><br>
+<img name="im" onClick="c(6)" src="test1-6.jpg"><img name="im" onClick="c(7)" src="test1-7.jpg"><img name="im" onClick="c(8)" src="test1-8.jpg"><br> 
+</div>
+<div align="center">
+<span id="msg"></span>
+</div>
+</body> 
+</html> 
